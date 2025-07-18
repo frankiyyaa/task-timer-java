@@ -1,0 +1,20 @@
+# Maven / Java
+/target/
+/**/target/
+/.idea/
+/*.iml
+*.class
+
+# IDEs and editors
+.vscode/
+*.code-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# SQLite (if you use a file DB in development)
+*.db
