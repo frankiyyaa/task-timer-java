@@ -1,6 +1,7 @@
 package com.project.tasktimer.dao;
 
 import com.project.tasktimer.model.Task;
+import com.project.tasktimer.util.TaskValidator;
 
 import java.sql.*;
 import java.time.LocalDate;
@@ -16,7 +17,8 @@ public class TaskDAO {
     private static final String DELETE_SQL = "DELETE FROM tasks WHERE id = ?";
     private static final String MARK_COMPLETED_SQL = "UPDATE tasks SET completed = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?";
 
-    public long create(Task task) throws SQLException {
+    public long create(Task task) {
+        TaskValidator.validate(task);
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement pst = conn.prepareStatement(INSERT_SQL, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -26,7 +28,6 @@ public class TaskDAO {
             pst.setInt(4, task.isCompleted() ? 1 : 0);
             pst.setLong(5, task.getCategoryId());
             pst.setLong(6, task.getUserId());
-
             pst.executeUpdate();
             try (ResultSet rs = pst.getGeneratedKeys()) {
                 if (rs.next()) {
@@ -35,11 +36,13 @@ public class TaskDAO {
                     return id;
                 }
             }
+        } catch (SQLException e) {
+            throw new RuntimeException("DB error while creating task", e);
         }
         return -1;
     }
 
-    public Task findById(long id) throws SQLException {
+    public Task findById(long id) {
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement pst = conn.prepareStatement(SELECT_BY_ID_SQL)) {
 
@@ -49,11 +52,13 @@ public class TaskDAO {
                     return mapRow(rs);
                 }
             }
+        } catch (SQLException e) {
+            throw new RuntimeException("DB error while fetching task", e);
         }
         return null;
     }
 
-    public List<Task> findAllByUser(long userId) throws SQLException {
+    public List<Task> findAllByUser(long userId) {
         List<Task> tasks = new ArrayList<>();
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement pst = conn.prepareStatement(SELECT_BY_USER_SQL)) {
@@ -64,11 +69,14 @@ public class TaskDAO {
                     tasks.add(mapRow(rs));
                 }
             }
+        } catch (SQLException e) {
+            throw new RuntimeException("DB error while fetching tasks", e);
         }
         return tasks;
     }
 
-    public boolean update(Task task) throws SQLException {
+    public boolean update(Task task) {
+        TaskValidator.validate(task);
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement pst = conn.prepareStatement(UPDATE_SQL)) {
 
@@ -78,27 +86,32 @@ public class TaskDAO {
             pst.setInt(4, task.isCompleted() ? 1 : 0);
             pst.setLong(5, task.getCategoryId());
             pst.setLong(6, task.getId());
-
             return pst.executeUpdate() == 1;
+        } catch (SQLException e) {
+            throw new RuntimeException("DB error while updating task", e);
         }
     }
 
-    public boolean delete(long id) throws SQLException {
+    public boolean delete(long id) {
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement pst = conn.prepareStatement(DELETE_SQL)) {
 
             pst.setLong(1, id);
             return pst.executeUpdate() == 1;
+        } catch (SQLException e) {
+            throw new RuntimeException("DB error while deleting task", e);
         }
     }
 
-    public boolean markCompleted(long id, boolean completed) throws SQLException {
+    public boolean markCompleted(long id, boolean completed) {
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement pst = conn.prepareStatement(MARK_COMPLETED_SQL)) {
 
             pst.setInt(1, completed ? 1 : 0);
             pst.setLong(2, id);
             return pst.executeUpdate() == 1;
+        } catch (SQLException e) {
+            throw new RuntimeException("DB error while marking task completed", e);
         }
     }
 
